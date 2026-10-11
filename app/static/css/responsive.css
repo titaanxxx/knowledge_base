@@ -1,0 +1,304 @@
+/* =========================================== */
+/*   АДАПТИВНАЯ ВЕРСТКА                        */
+/* =========================================== */
+
+/* Планшеты и большие экраны */
+@media (max-width: 1200px) {
+  :root {
+    --sidebar-width: 280px;
+  }
+
+  .content-inner {
+    max-width: 900px;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .favorites-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+/* Маленькие планшеты */
+@media (max-width: 980px) {
+  :root {
+    --sidebar-width: 260px;
+    --page-gap: 18px;
+  }
+
+  .content-inner {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tables-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .interactive-nav-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .search-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Мобильные устройства */
+@media (max-width: 720px) {
+  :root {
+    --sidebar-width: 100%;
+    --header-height: auto;
+    --page-gap-mobile: 16px;
+  }
+
+  /* Header становится вертикальным */
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .header-right {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .top-nav {
+    justify-content: center;
+  }
+
+  /* Sidebar становится горизонтальным */
+  .main-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .sidebar.collapsed {
+    display: none;
+  }
+
+  .toggle-sidebar {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    left: auto;
+    top: auto;
+    z-index: 1000;
+  }
+
+  /* Content занимает всю ширину */
+  .content {
+    margin-left: 0;
+    width: 100%;
+    padding: var(--page-gap-mobile);
+  }
+
+  /* Уменьшаем отступы */
+  .article-content, .kb-latest, .add-form-container {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  /* Заголовок статьи */
+  .title-header-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .article-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Кнопки в колонку */
+  .article-admin-actions, .form-buttons, .answer-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .auth-btn, .btn-feedback, .btn-submit-question {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Поиск на всю ширину */
+  .search-input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .search-wrapper {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* Избранное */
+  .favorites-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .favorite-card-header {
+    flex-wrap: wrap;
+  }
+
+  .favorite-card-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  /* Модалки на мобильных */
+  .modal-card, .modal-content {
+    max-width: 95%;
+    max-height: 90vh;
+    margin: 10px;
+  }
+
+  .modal-header {
+    padding: 20px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  /* Нумерация строк */
+  .article-numbered-block {
+    padding-left: 34px !important;
+  }
+
+  .article-block-number {
+    width: 24px;
+    font-size: 11px;
+  }
+
+  .numbered-code-line {
+    grid-template-columns: 32px max-content;
+    column-gap: 8px;
+    padding: 0 8px;
+  }
+
+  .numbered-code-block {
+    font-size: 12px;
+  }
+
+  /* Статистика */
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 12px 8px;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+  }
+
+  /* Таблицы */
+  .dashboard-table {
+    font-size: 14px;
+  }
+
+  .dashboard-table th,
+  .dashboard-table td {
+    padding: 8px;
+  }
+
+  /* Хлебные крошки */
+  .breadcrumbs {
+    font-size: 14px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* ИИ-помощник */
+  #ai-question-text {
+    min-height: 80px;
+    padding: 12px;
+  }
+
+  .btn-ai-question-header {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  /* Footer */
+  footer {
+    padding: 12px;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 480px) {
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .auth-link {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .btn-export-icon, .btn-favorite {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+}
+
+/* Печать */
+@media print {
+  .sidebar, .header, .toggle-sidebar, .article-admin-actions, .article-actions {
+    display: none !important;
+  }
+
+  .content {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .article-content {
+    background: white;
+    color: black;
+    border: none;
+    box-shadow: none;
+  }
+}

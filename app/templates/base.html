@@ -6,7 +6,7 @@
   <title>{{ page_title or 'База знаний' }}</title>
 
   <!-- Основные стили -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
   <!-- EasyMDE (редактор Markdown) -->
@@ -214,13 +214,20 @@
 </div>
 
 <!-- ========== ПОДКЛЮЧЕНИЕ СКРИПТОВ ========== -->
-<script src="{{ url_for('static', filename='scripts.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tree-menu.js') }}"></script>
+<script src="{{ url_for('static', filename='js/editor.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <!-- Передаем данные дерева в JS -->
 <script>
-  window.treeData = {{ tree|tojson if tree is defined else '[]' }};
-  window.CURRENT_USER_IS_ADMIN = {{ 'true' if current_user.is_authenticated and current_user.is_admin else 'false' }};
+  {% if tree is defined and tree %}
+  window.treeData = {{ tree|tojson }};
+  {% else %}
+  window.treeData = [];
+  {% endif %}
+  {% set is_admin = current_user.is_authenticated and current_user.is_admin %}
+  window.CURRENT_USER_IS_ADMIN = {{ is_admin|tojson }};
 </script>
 
 </body>

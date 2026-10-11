@@ -1,0 +1,56 @@
+/* =========================================== */
+/*   БАЗОВЫЕ СТИЛИ: ПЕРЕМЕННЫЕ И СБРОС       */
+/* =========================================== */
+
+:root {
+  --bg: #0b1120;
+  --panel: #121826;
+  --panel-2: #172033;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --line: #24324a;
+  --blue: #2f6fed;
+  --blue-2: #4e86ff;
+  --danger: #ef4444;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  --sidebar-width: 330px;
+  --header-height: 72px;
+  --page-gap: 24px;
+  --page-gap-mobile: 16px;
+  --toggle-size: 42px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: radial-gradient(circle at top, rgba(47,111,237,0.12), transparent 35%), var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Базовые стили для текста */
+h1, h2, h3, h4, h5, h6 {
+  color: #f8fafc;
+}
+
+p, li {
+  line-height: 1.7;
+}
