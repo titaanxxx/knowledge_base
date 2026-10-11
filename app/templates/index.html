@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ page_title or 'База знаний' }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+
+  <script>
+  // ВАЖНО: Используем конструкцию raw, чтобы Jinja не трогала символы $
+  {% raw %}
+  window.MathJax = {
+    tex: {
+      inlineMath: [['\$', '\$'], ['\\$', '\\$']], 
+      displayMath: [['\$$', '\$$'], ['\\$$', '\\$$']]
+    },
+    options: {
+      ignoreHtmlClass: "tex-ignore",
+      processHtmlClass: "tex-process"
+    }
+  };
+  {% endraw %}
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+  
+
+</head>
+
+<!-- КОНТЕЙНЕР ДЛЯ УВЕДОМЛЕНИЙ -->
+<div class="flash-centerer">
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-toast {{ category }}">
+            <span class="toast-message">{{ message }}</span>
+            <button type="button" class="toast-close" aria-label="Закрыть">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+</div>
+
+<div class="main-container">
+<body class="js-prevent-animate">
+  
+<div class="page">
+  <div class="header">
+    <div class="header-left">
+      <nav class="top-nav">
+        <a href="{{ url_for('main.knowledge') }}">Главная</a>
+        <a href="{{ url_for('main.courses') }}">Курсы</a>
+        <a href="#" onclick="showAbout(); return false;">О базе знаний</a>
+      </nav>
+    </div>
+
+    <div class="header-right">
+      {% if current_user.is_authenticated %}
+        <span class="user-label">👤 {{ current_user.username }}</span>
+        <a href="{{ url_for('auth.logout') }}" class="auth-link auth-link-danger">Выйти</a>
+      {% else %}
+        <a href="#" class="auth-link auth-link-primary" onclick="openAuthModal('login'); return false;">Вход</a>
+        <a href="#" class="auth-link auth-link-secondary" onclick="openAuthModal('register'); return false;">Регистрация</a>
+      {% endif %}
+
+      <div class="question-icon" id="questionIcon" title="Помощь">
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDEyQzEwLjQ1IDEyIDEwIDEyLjQ1IDEwIDE0SDE0QzE0IDEyLjQ1IDEzLjU1IDEyIDEyIDEyWk0xMiAyMEgxNFYyMEgxMlYyMFpNMTIgM0M3LjQ2IDMgNCA1LjQ2IDQgOVM3LjQ2IDE1IDEyIDE1UzIwIDEyLjU0IDIwIDhDNS41NCAzIDMuNTQgNS40NiAzIDhTMCA1LjQ2IDAgOFMxLjQ2IDkgMyAxMFYxMUgzVjEwQzEuNDYgMTAgMiAxMC40NSAyIDExVjE0SDEwVjE3SDE0VjE0SDE3VjExQzE3LjU0IDExIDE4IDEwLjQ1IDE4IDEwVjloMkM3Ljg1IDkgNiAzLjg1IDIgMkMyLjE1IDIgMSAzLjE1IDEgNVY4QzEuNjYgNi4yOSAyLjIzIDQuNzcgMy4xIDEuODZDMy45NyAxLjA5IDQuNzcgMCA1IDBTNi4wMyAwIDcgMS44M0MxMC4yMyA1LjIzIDEyIDkgMTIgOVMxMy43NyA1LjIzIDE3LjE3IDEuODNDMTguMDMgMS4wOSAxOC45NyAwIDIwIDBTMjMuMDMgMCAyNCAxLjgzQzI0LjIzIDMuMTcgMjQuNzcgNC42OSAyNSAxVjBTMjQuNTQgMiAyNCAzWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+" alt="?" />
+        <div id="questionDropdown" class="dropdown question-dropdown">
+          <p><strong>💡 Как пользоваться:</strong></p>
+          <p>1. Выберите уровень → 2. Родитель → 3. Markdown</p>
+        </div>
+      </div>
+
+        <!-- КНОПКА ИИ -->
+    <button class="btn-ai-question-header" onclick="openAiQuestionModal()">
+      <i class="fa-solid fa-robot"></i>
+      Задать вопрос ИИ
+    </button>
+
+      <div class="search-wrapper">
+        <form action="{{ url_for('main.search') }}" method="get">
+          <input type="text" name="q" class="search-input" placeholder="🔍 Поиск по статьям..." />
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <button class="toggle-sidebar" id="toggleBtn" title="Скрыть / показать">←</button>
+
+    <div class="sidebar" id="sidebar">
+      <!-- ИСПРАВЛЕНО: Убран блок elif articles, который мешал выводу меню -->
+      {% if tree %}
+        <h3>📚 ДЕРЕВО ЗНАНИЙ</h3>
+        <ul id="tree-navigation" class="tree-navigation"></ul>
+      {% else %}
+        <h3>НАВИГАЦИЯ</h3>
+        <ul>
+          <li><a href="{{ url_for('main.knowledge') }}">← На главную</a></li>
+        </ul>
+      {% endif %}
+
+      {% if current_user.is_authenticated %}
+        <hr />
+
+        {% if current_user.is_admin %}
+          <a href="{{ url_for('admin.add_article') }}" class="sidebar-add-link">
+            ➕ Добавить статью
+          </a>
+        {% endif %}
+
+        <a href="{{ url_for('main.favorites') }}" class="favorites-link">
+          ⭐ Избранное
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="content">
+      <div class="content-inner">
+        {% if article %}
+          <div class="title-header-group">
+            <div class="title-wrapper">
+              <h1 class="page-title">
+                {{ page_title }}
+                <!-- Иконка черновика появляется только если есть несохраненные данные -->
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                  {% if article.is_dirty or unsaved_title_change %}
+                    <span class="draft-icon" title="Есть несохраненный черновик"></span>
+                  {% endif %}
+                {% endif %}
+              </h1>
+            </div>
+            
+            <!-- Кнопки экспорта теперь стоят отдельно справа -->
+            <div class="article-actions">
+              <!-- Кнопка избранного -->
+              {% if article and current_user.is_authenticated %}
+                <button class="btn-favorite {% if article.id in favorited_article_ids %}active{% endif %}" 
+                        data-article-id="{{ article.id }}"
+                        title="Добавить в избранное"
+                        aria-label="В избранное">
+                  <i class="fa-solid fa-heart"></i>
+                </button>
+              {% endif %}
+              <a href="{{ url_for('main.export_article_pdf', slug=article.slug) }}"
+                 class="btn-export-icon btn-export-pdf"
+                 title="Скачать статью в формате PDF"
+                 aria-label="Экспортировать статью в PDF">
+                <i class="fa-solid fa-file-pdf"></i>
+              </a>
+              
+              <a href="{{ url_for('main.export_article', slug=article.slug) }}"
+                 class="btn-export-icon" 
+                 title="Скачать статью в формате Markdown"
+                 aria-label="Экспортировать статью">
+                <i class="fa-solid fa-download"></i>
+              </a>
+
+            </div>
+          </div>
+        {% endif %}
+
+
+        {% if article and not edit_mode %}
+                {% if breadcrumbs %}
+        <nav class="breadcrumbs">
+            <!-- Корень -->
+            <a href="{{ url_for('main.knowledge') }}">🏠 Главная</a>
+            
+            {% for crumb in breadcrumbs %}
+                <span style="margin: 0 5px;">→</span>
+                
+                <!-- Ссылка с иконкой уровня -->
+                <a href="/article/{{ crumb.slug }}" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                    <!-- Иконка в зависимости от уровня -->
+                    {% if crumb.level == 0 %}
+                        <i class="fa-solid fa-book" title="Курс"></i>
+                    {% elif crumb.level == 1 %}
+                        <i class="fa-solid fa-folder" title="Модуль"></i>
+                    {% elif crumb.level == 2 %}
+                        <i class="fa-solid fa-folder" title="Тема"></i>
+                    {% elif crumb.level == 3 %}
+                        <i class="fa-solid fa-file" title="Статья"></i>
+                    {% endif %}
+                    
+                    {{ crumb.title }}
+                </a>
+            {% endfor %}
+        </nav>
+
+        {% endif %}
+          <div class="article-content">
+            <div class="article-text">
+              {{ content_html | safe }}
+            </div>
+          </div>
+
+
+          
+
+          {% if current_user.is_authenticated and current_user.is_admin %}
+            <div class="article-admin-actions">
+              <a href="{{ url_for('admin.edit_article', slug=article.slug) }}" class="auth-btn primary">Редактировать</a>
+              <form action="{{ url_for('admin.delete_article', slug=article.slug) }}" method="post" class="inline-form">
+                <button type="submit" class="auth-btn secondary" onclick="return confirm('Удалить статью?')">Удалить</button>
+              </form>
+            </div>
+          {% endif %}
+
+                    <!-- ИНТЕРАКТИВНАЯ НАВИГАЦИЯ ПО СОСЕДЯМ -->
+          {% if prev or next_article %}
+          <nav class="interactive-nav-level" aria-label="Навигация по уровню">
+            <div class="nav-level-header">
+              <span>
+                📂 {{ {0: 'Курс', 1: 'Модуль', 2: 'Тема', 3: 'Статья'}.get(article.level, 'Раздел') }}
+              </span>
+            </div>
+            
+            <div class="interactive-nav-grid">
+              
+              <!-- ПРЕДЫДУЩИЙ ЭЛЕМЕНТ -->
+              {% if prev %}
+                <div class="nav-item nav-item-prev">
+                  <a href="/article/{{ prev.slug }}" class="nav-link-full">
+                    <span class="nav-icon">←</span>
+                    <span class="nav-text">
+                      <strong>Назад:</strong> {{ prev.title }}
+                    </span>
+                  </a>
+                </div>
+              {% else %}
+                <div class="nav-item nav-item-empty"></div>
+              {% endif %}
+
+              <!-- ЦЕНТРАЛЬНЫЙ ЭЛЕМЕНТ (Текущая статья / Контекст) -->
+              <div class="nav-item nav-item-current">
+                <span class="nav-text-center">
+                  Сейчас здесь: <strong>{{ article.title }}</strong>
+                </span>
+              </div>
+
+              <!-- СЛЕДУЮЩИЙ ЭЛЕМЕНТ -->
+              {% if next_article %}
+                <div class="nav-item nav-item-next">
+                  <a href="/article/{{ next_article.slug }}" class="nav-link-full">
+                    <span class="nav-text">
+                      <strong>Далее:</strong> {{ next_article.title }}
+                    </span>
+                    <span class="nav-icon">→</span>
+                  </a>
+                </div>
+              {% else %}
+                <div class="nav-item nav-item-empty"></div>
+              {% endif %}
+
+            </div>
+          </nav>
+          {% endif %}
+
+        <!-- РЕЗУЛЬТАТЫ ПОИСКА -->
+        {% elif is_search %}
+            <section class="kb-latest">
+                <h2>🔍 Результаты поиска: "{{ page_title.replace('Поиск: ', '') }}"</h2>
+                {% if articles %}
+                    <ul class="article-list">
+                        {% for article in articles %}
+                            <li>
+                                <a href="/article/{{ article.slug }}">{{ article.title }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Ничего не найдено.</p>
+                {% endif %}
+            </section>
+
+
+        {% elif page_title == '⭐ Избранное' %}
+          <section class="favorites-page">
+            <div class="favorites-header">
+              <h2>⭐ Избранное</h2>
+              <p class="favorites-count">
+                {% set total = favorites_tree|length %}
+                {{ total }} {{ 'материал' if total == 1 else 'материала' if total < 5 else 'материалов' }} в избранном
+              </p>
+            </div>
+            
+            {% if favorites_tree %}
+              <div class="favorites-grid">
+                {% for item in favorites_tree %}
+                  <article class="favorite-card favorite-card-{{ item.type }}">
+                    <header class="favorite-card-header">
+                      <div class="favorite-card-icon">
+                        {% if item.type == 'course' %}
+                          <i class="fa-solid fa-book"></i>
+                        {% elif item.type == 'module' %}
+                          <i class="fa-solid fa-folder"></i>
+                        {% else %}
+                          <i class="fa-solid fa-file"></i>
+                        {% endif %}
+                      </div>
+                      <h3>
+                        <a href="/article/{{ item.article.slug }}">
+                          {{ item.article.title }}
+                        </a>
+                      </h3>
+                      <span class="favorite-card-level level-{{ item.article.level }}">
+                        {{ {0: 'Курс', 1: 'Модуль', 2: 'Тема', 3: 'Статья'}.get(item.article.level, 'Раздел') }}
+                      </span>
+                    </header>
+                    
+                    {% if item.children %}
+                      <div class="favorite-card-children">
+                        <div class="children-header">
+                          <i class="fa-solid fa-sitemap"></i>
+                          <span>Вложенные материалы ({{ item.children|length }})</span>
+                        </div>
+                        <ul class="children-tree">
+                          {% for child in item.children %}
+                            <li class="child-item">
+                              <div class="child-item-header">
+                                <i class="fa-solid fa-caret-right"></i>
+                                <a href="/article/{{ child.article.slug }}">
+                                  {{ child.article.title }}
+                                </a>
+                              </div>
+                              {% if child.children %}
+                                <ul class="sub-children">
+                                  {% for subchild in child.children %}
+                                    <li>
+                                      <a href="/article/{{ subchild.article.slug }}">
+                                        <i class="fa-solid fa-angle-right"></i>
+                                        {{ subchild.article.title }}
+                                      </a>
+                                    </li>
+                                  {% endfor %}
+                                </ul>
+                              {% endif %}
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                    {% endif %}
+                    
+                    <footer class="favorite-card-footer">
+                      <span class="favorite-date">
+                        <i class="fa-regular fa-clock"></i>
+                        Добавлено {{ item.favorite.created_at.strftime('%d.%m.%Y') if item.favorite and item.favorite.created_at else 'давно' }}
+                      </span>
+                      <button class="btn-remove-favorite" data-article-id="{{ item.article.id }}">
+                        <i class="fa-solid fa-trash"></i>
+                        Удалить
+                      </button>
+                    </footer>
+                  </article>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="favorites-empty">
+                <div class="empty-icon">
+                  <i class="fa-regular fa-heart"></i>
+                </div>
+                <h3>В избранном пока пусто</h3>
+                <p>Нажмите на сердечко <i class="fa-solid fa-heart" style="color: #ef4444;"></i> рядом с любой статьёй, чтобы добавить её в избранное</p>
+                <a href="{{ url_for('main.knowledge') }}" class="auth-btn primary">
+                  <i class="fa-solid fa-arrow-left"></i>
+                  Вернуться к статьям
+                </a>
+              </div>
+            {% endif %}
+          </section>
+
+        {% elif show_form %}
+          <div class="add-form-container">
+            <form action="{{ request.path }}" method="post" class="add-form-enhanced">
+              <div class="form-grid">
+                <div class="form-field">
+                  <label>📝 Заголовок статьи *</label>
+                  <input type="text" name="title" value="{{ article.title if article else request.form.get('title', '') }}" required placeholder="Циклы foreach в C#">
+                </div>
+
+                <div class="form-field">
+                  <label>Уровень</label>
+                  <select name="level" class="form-select">
+                      <option value="0" class="level-0" {% if (article and article.level == 0) or request.form.level == '0' %}selected{% endif %}>
+                          <i class="fa-solid fa-book"></i> Курс
+                      </option>
+                      <option value="1" class="level-1" {% if (article and article.level == 1) or request.form.level == '1' %}selected{% endif %}>
+                          <i class="fa-solid fa-folder"></i> Модуль
+                      </option>
+                      <option value="2" class="level-2" {% if (article and article.level == 2) or request.form.level == '2' %}selected{% endif %}>
+                          <i class="fa-solid fa-folder"></i> Тема
+                      </option>
+                      <option value="3" class="level-3" {% if (article and article.level == 3) or request.form.level == '3' %}selected{% endif %}>
+                          <i class="fa-solid fa-file"></i> Статья
+                      </option>
+                  </select>
+                </div>
+
+              <div class="form-field full">
+                <label>📂 Родительский элемент</label>
+                
+                <!-- Скрытый input для отправки значения -->
+                <input type="hidden" name="parent_id" id="parent-id-input" value="{{ article.parent_id if article else request.form.get('parent_id', '') }}">
+                
+                <!-- Кастомное дерево -->
+                <div class="parent-tree-wrapper">
+                  <div class="parent-tree-select-box" id="parent-tree-box">
+                    <span id="parent-tree-label">— 🏠 Корень (без родителя) —</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                  </div>
+                  
+                  <div class="parent-tree-dropdown" id="parent-tree-dropdown">
+                    <div class="parent-tree-option" data-value="" data-level="0">
+                      <span class="tree-indent"></span>
+                      <span class="tree-icon">🏠</span>
+                      <span>Корень (без родителя)</span>
+                    </div>
+                    
+                    {% for parent in parents %}
+                      <div class="parent-tree-option" 
+                           data-value="{{ parent.id }}" 
+                           data-level="{{ parent.level }}">
+                        <span class="tree-indent" style="padding-left: {{ (parent.level - 1) * 20 if parent.level > 0 else 0 }}px;">
+                          {% if parent.level > 0 %}<i class="fa-solid fa-caret-right"></i>{% endif %}
+                        </span>
+                        <span class="tree-icon">
+                          {% if parent.level == 0 %}📖
+                          {% elif parent.level == 1 %}📁
+                          {% elif parent.level == 2 %}📂
+                          {% else %}📄{% endif %}
+                        </span>
+                        <span>{{ parent.title }}</span>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-field full">
+                <label>📄 Содержимое (Markdown) *</label>
+                <input type="hidden" name="submit_type" id="submit-type-value" value="publish">
+                <textarea id="content-editor" name="content" rows="18">{{ edit_content|safe }}</textarea>
+              </div>
+
+              <div class="form-buttons">
+                <!-- Скрытое поле сообщает серверу, какую логику выбрать -->
+                <input type="hidden" name="submit_type" id="submit-type-value" value="publish">
+
+                <button type="submit" class="auth-btn primary" onclick="document.getElementById('submit-type-value').value = 'publish';">
+                  💾 Опубликовать изменения
+                </button>
+
+                <button type="submit" class="auth-btn secondary" onclick="document.getElementById('submit-type-value').value = 'draft';">
+                  📝 Сохранить в черновик
+                </button>
+
+                <a href="{{ url_for('main.knowledge') }}" class="auth-btn tertiary">
+                  ← На главную
+                </a>
+              </div>
+            </form>
+          </div>
+          <!-- КУРСЫ -->
+          {% elif page_title == 'Курсы' %}
+              <section class="kb-latest">
+                  <h2>📖 Курсы</h2>
+                  {% if articles %}
+                      <ul class="article-list">
+                          {% for article in articles %}
+                              <li>
+                                  <a href="/article/{{ article.slug }}">{{ article.title }}</a>
+                              </li>
+                          {% endfor %}
+                      </ul>
+                  {% else %}
+                      <p>Курсы пока не добавлены.</p>
+                  {% endif %}
+              </section>
+          
+          {% else %}
+
+          
+          <!-- РЕЗУЛЬТАТЫ ПОИСКА (если мы находимся на /search) -->
+          {% if request.path == '/search' and articles is defined and articles|length > 0 %}
+            <section class="search-results-container">
+                <h2>Результат поиска: "{{ request.args.get('q') }}"</h2>
+                
+                <div class="article-grid search-grid">
+                    {% for art in articles %}
+                    <div class="article-card-search">
+                        <a href="/article/{{ art.slug }}" class="search-title">{{ art.title }}</a>
+                        
+                        <!-- Превью текста через хелпер get_article_markdown -->
+                        <div class="search-excerpt">
+                            {% set plain = get_article_markdown(art.slug)|striptags %}
+                            {{ (plain[:250] + '...') if plain|length > 250 else plain }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+          <!-- ГЛАВНАЯ СТРАНИЦА СО СТАТИСТИКОЙ (только если мы на /knowledge) -->
+          {% elif page_title == 'База знаний' or not articles %}
+            <!-- НОВЫЙ БЛОК ДАШБОРДА -->
+            <section class="dashboard-stats">
+                <h2>📊 Статистика</h2>
+                
+                <div class="stat-grid">
+                    <div class="stat-card total"><i class="fa-solid fa-layer-group"></i><span class="stat-value" id="stat-total">--</span><span class="stat-label">Всего материалов</span></div>
+                    <div class="stat-card course"><i class="fa-solid fa-book"></i><span class="stat-value" id="stat-courses">--</span><span class="stat-label">Курсы</span></div>
+                    <div class="stat-card module"><i class="fa-solid fa-folder"></i><span class="stat-value" id="stat-modules">--</span><span class="stat-label">Модули</span></div>
+                    <div class="stat-card topic"><i class="fa-solid fa-folder"></i><span class="stat-value" id="stat-topics">--</span><span class="stat-label">Темы</span></div>
+                    <div class="stat-card article"><i class="fa-solid fa-file"></i><span class="stat-value" id="stat-articles">--</span><span class="stat-label">Статьи</span></div>
+                </div>
+
+                <div class="tables-grid">
+                    <div class="table-container"><h3>➕ Последние добавленные</h3><table class="dashboard-table"><thead><tr><th>Название</th><th>Тип</th><th>Дата</th></tr></thead><tbody id="table-added-body"><tr><td colspan="3"><em>Загрузка...</em></td></tr></tbody></table></div>
+                    <div class="table-container"><h3>✏️ Последние обновленные</h3><table class="dashboard-table"><thead><tr><th>Название</th><th>Тип</th><th>Дата правки</th></tr></thead><tbody id="table-updated-body"><tr><td colspan="3"><em>Загрузка...</em></td></tr></tbody></table></div>
+                </div>
+            </section>
+
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+
+
+  <div id="aboutModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content about-modal">
+      <h3>📚 О базе знаний</h3>
+      <p>Это структурированная база знаний по программированию.</p>
+      <p><strong>Структура:</strong></p>
+      <ul>
+        <li><i class="fa-solid fa-book"></i> <strong>Курс</strong> (уровень 0)</li>
+        <li><i class="fa-solid fa-folder"></i> <strong>Модуль</strong> (уровень 1)</li>
+        <li><i class="fa-solid fa-folder"></i> <strong>Тема</strong> (уровень 2)</li>
+        <li><i class="fa-solid fa-file"></i> <strong>Статья</strong> (уровень 3)</li>
+      </ul>
+      <p>Статьи хранятся в <code>articles/*.md</code> и автоматически индексируются.</p>
+      <button onclick="closeAbout()" class="auth-btn secondary">Закрыть</button>
+    </div>
+  </div>
+
+  <div id="authModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card auth-modal">
+      <button class="modal-close" type="button" onclick="closeAuthModal()">×</button>
+      <div class="auth-card__header">
+        <h1 id="authTitle">Вход</h1>
+        <p id="authSubtitle">Войдите в аккаунт, чтобы продолжить</p>
+      </div>
+      <div class="auth-body" id="authBody"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <div class="social-links">
+        <a href="#" class="social-link" title="Telegram">📱</a>
+        <a href="#" class="social-link" title="VK">👥</a>
+        <a href="#" class="social-link" title="GitHub">💻</a>
+        <a href="#" class="social-link" title="YouTube">📺</a>
+      </div>
+      <span class="footer-divider">·</span>
+      <a href="#" class="footer-link">Сообщить об ошибке</a>
+    </div>
+    
+  </footer>
+</div>
+
+<script src="{{ url_for('static', filename='scripts.js') }}?v=2"></script>
+<script>
+window.treeData = {{ tree|tojson if tree is defined else '[]' }};
+document.addEventListener('DOMContentLoaded', function() {
+    // === СУЩЕСТВУЮЩИЙ КОД ===
+    const container = document.getElementById('articles-container');
+    
+    if (window.location.pathname === '/search' || "{{ 'true' if is_search else 'false' }}" === 'true') {
+        console.log('[JS] Search mode detected. Skipping latest articles load.');
+        return;
+    }
+
+    if (container) {
+        fetch('/api/articles/latest')
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                data.forEach(article => {
+                    html += `
+                        <div class="article-card">
+                            <h2><a href="/article/${article.slug}">${article.title}</a></h2>
+                            <p>${article.excerpt || 'Краткое описание...'}</p>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке статей:', error);
+                container.innerHTML = '<p>Не удалось загрузить последние материалы.</p>';
+            });
+    }
+
+    
+    // === НОВЫЙ КОД: УДАЛЕНИЕ ИЗ ИЗБРАННОГО ===
+    const removeButtons = document.querySelectorAll('.btn-remove-favorite');
+    
+    removeButtons.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const articleId = this.getAttribute('data-article-id');
+            const card = this.closest('.favorite-card');
+            
+            if (confirm('Удалить эту статью из избранного?')) {
+                fetch(`/api/favorite/toggle/${articleId}`, {
+                    method: 'POST'
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'removed') {
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.9)';
+                        setTimeout(() => {
+                            card.remove();
+                            const countEl = document.querySelector('.favorites-count');
+                            if (countEl) {
+                                const count = parseInt(countEl.textContent) - 1;
+                                countEl.textContent = count + ' ' + (count === 1 ? 'материал' : (count < 5 ? 'материала' : 'материалов'));
+                            }
+                        }, 300);
+                    }
+                });
+            }
+        });
+    });
+    // ================================
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const articleText = document.querySelector(".article-text");
+
+    if (!articleText) {
+        return;
+    }
+
+    let sourceLineNumber = 1;
+
+    // Нумеруем только обычные Markdown-блоки.
+    // ol, ul и pre здесь специально НЕ указываем.
+    const blocks = articleText.querySelectorAll(
+        ":scope > p, :scope > h1, :scope > h2, :scope > h3, " +
+        ":scope > h4, :scope > h5, :scope > h6, " +
+        ":scope > blockquote, :scope > table"
+    );
+
+    blocks.forEach(function (block) {
+        const number = document.createElement("span");
+
+        number.className = "article-block-number";
+        number.textContent = sourceLineNumber;
+
+        block.classList.add("article-numbered-block");
+        block.insertBefore(number, block.firstChild);
+
+        sourceLineNumber += 1;
+    });
+
+    // Нумерованные и маркированные списки оставляем
+    // под управлением самого Markdown.
+    articleText.querySelectorAll(":scope > ol, :scope > ul").forEach(function (list) {
+        list.classList.add("article-markdown-list");
+    });
+
+    // Кодовый блок разбираем отдельно по реальным строкам.
+    articleText.querySelectorAll(":scope > pre").forEach(function (pre) {
+        const code = pre.querySelector("code");
+        const codeText = code ? code.textContent : pre.textContent;
+
+        const lines = codeText.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "numbered-code-block";
+
+        lines.forEach(function (line) {
+            const codeLine = document.createElement("div");
+            codeLine.className = "numbered-code-line";
+
+            const number = document.createElement("span");
+            number.className = "code-line-number";
+            number.textContent = sourceLineNumber;
+
+            const text = document.createElement("span");
+            text.className = "code-line-text";
+            text.textContent = line || " ";
+
+            codeLine.appendChild(number);
+            codeLine.appendChild(text);
+            wrapper.appendChild(codeLine);
+
+            sourceLineNumber += 1;
+        });
+
+        pre.replaceWith(wrapper);
+    });
+});
+
+// Кастомное дерево выбора родителя
+document.addEventListener('DOMContentLoaded', function() {
+  const treeBox = document.getElementById('parent-tree-box');
+  const treeDropdown = document.getElementById('parent-tree-dropdown');
+  const parentInput = document.getElementById('parent-id-input');
+  const parentLabel = document.getElementById('parent-tree-label');
+  const options = document.querySelectorAll('.parent-tree-option');
+  
+  if (!treeBox || !treeDropdown) return;
+  
+  // Открыть/закрыть дерево
+  treeBox.addEventListener('click', function() {
+    treeDropdown.classList.toggle('show');
+  });
+  
+  // Закрыть при клике вне
+  document.addEventListener('click', function(e) {
+    if (!treeBox.contains(e.target) && !treeDropdown.contains(e.target)) {
+      treeDropdown.classList.remove('show');
+    }
+  });
+  
+  // Выбор опции
+  options.forEach(function(option) {
+    option.addEventListener('click', function() {
+      const value = this.getAttribute('data-value');
+      const title = this.querySelector('span:last-child').textContent;
+      
+      // Установить значение
+      parentInput.value = value;
+      parentLabel.textContent = value ? title : '— 🏠 Корень (без родителя) —';
+      
+      // Подсветка выбранного
+      options.forEach(opt => opt.classList.remove('selected'));
+      this.classList.add('selected');
+      
+      // Закрыть дерево
+      treeDropdown.classList.remove('show');
+    });
+  });
+});
+
+// Кнопка избранного
+document.addEventListener('DOMContentLoaded', function() {
+  const favoriteBtn = document.querySelector('.btn-favorite');
+  if (!favoriteBtn) return;
+  
+  const articleId = favoriteBtn.getAttribute('data-article-id');
+  
+  
+  // Клик по кнопке
+  favoriteBtn.addEventListener('click', function() {
+    fetch(`/api/favorite/toggle/${articleId}`, {
+      method: 'POST'
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.favorited) {
+        favoriteBtn.classList.add('active');
+      } else {
+        favoriteBtn.classList.remove('active');
+      }
+    });
+  });
+});
+
+
+</script>
+
+<!-- Модальное окно для вопроса ИИ -->
+<div id="ai-question-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-robot"></i> Задать вопрос ИИ-помощнику</h3>
+      <button class="modal-close" onclick="closeAiQuestionModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="question-input-group">
+        <textarea 
+          id="ai-question-text" 
+          placeholder="Например: Что такое формула Гаусса? Как работает нормализация БД?"
+          rows="3"
+        ></textarea>
+        <button class="btn-submit-question" onclick="submitAiQuestion()">
+          <i class="fa-solid fa-paper-plane"></i>
+          Отправить
+        </button>
+      </div>
+      
+      <!-- Блок загрузки -->
+      <div id="ai-loading" class="ai-loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>🤖 ИИ анализирует базу знаний и готовит ответ...</p>
+        <p class="loading-note">Это может занять 1-3 минуты</p>
+      </div>
+      
+      <!-- Блок ответа -->
+      <div id="ai-answer" class="ai-answer" style="display: none;">
+        <div class="answer-content" id="ai-answer-text"></div>
+        
+        <div class="answer-sources" id="ai-answer-sources">
+          <h4>📚 Источники:</h4>
+          <ul id="sources-list"></ul>
+        </div>
+        
+        <div class="answer-actions">
+          <button class="btn-feedback" onclick="rateAnswer(true)">
+            <i class="fa-solid fa-thumbs-up"></i> Полезно
+          </button>
+          <button class="btn-feedback" onclick="rateAnswer(false)">
+            <i class="fa-solid fa-thumbs-down"></i> Не полезно
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+// Открытие модального окна
+function openAiQuestionModal() {
+  document.getElementById('ai-question-modal').style.display = 'flex';
+  document.getElementById('ai-question-text').focus();
+}
+
+// Закрытие
+function closeAiQuestionModal() {
+  document.getElementById('ai-question-modal').style.display = 'none';
+  document.getElementById('ai-loading').style.display = 'none';
+  document.getElementById('ai-answer').style.display = 'none';
+  document.getElementById('ai-question-text').value = '';
+}
+
+// Отправка вопроса
+async function submitAiQuestion() {
+  const question = document.getElementById('ai-question-text').value.trim();
+  
+  if (!question) {
+    alert('Введите вопрос!');
+    return;
+  }
+  
+  // Показываем загрузку
+  document.getElementById('ai-loading').style.display = 'block';
+  document.getElementById('ai-answer').style.display = 'none';
+  
+  try {
+    const response = await fetch('/api/ask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ question: question })
+    });
+    
+    const data = await response.json();
+    
+    if (data.error) {
+      alert('Ошибка: ' + data.error);
+      return;
+    }
+    
+    // Показываем ответ
+    document.getElementById('ai-loading').style.display = 'none';
+    document.getElementById('ai-answer').style.display = 'block';
+    
+    // Форматируем ответ (Markdown → HTML)
+    const htmlAnswer = marked.parse(data.answer);
+    document.getElementById('ai-answer-text').innerHTML = htmlAnswer;
+    
+    // Источники
+    const sourcesList = document.getElementById('sources-list');
+    sourcesList.innerHTML = '';
+    
+    data.sources.forEach(source => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <a href="/article/${source.slug}">
+          ${source.title}
+          <span class="relevance-badge">${source.relevance}% совпадение</span>
+        </a>
+      `;
+      sourcesList.appendChild(li);
+    });
+    
+  } catch (error) {
+    document.getElementById('ai-loading').style.display = 'none';
+    alert('Ошибка соединения: ' + error.message);
+  }
+}
+
+// Оценка ответа
+function rateAnswer(helpful) {
+  alert('Спасибо за оценку! (функционал в разработке)');
+  closeAiQuestionModal();
+}
+
+// Закрытие по клику вне окна
+window.onclick = function(event) {
+  const modal = document.getElementById('ai-question-modal');
+  if (event.target === modal) {
+    closeAiQuestionModal();
+  }
+}
+</script>
+
+</body>
+</html>

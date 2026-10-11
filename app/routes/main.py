@@ -1,0 +1,69 @@
+from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask_login import current_user
+from markupsafe import Markup
+
+from app.models import ArticleNode, Favorite
+from app.services.tree_service import build_tree, get_breadcrumb_path
+from app.utils.markdown_utils import prepare_markdown, render_article_html
+
+main_bp = Blueprint('main', __name__)
+
+
+@main_bp.route("/")
+@main_bp.route("/knowledge")
+def knowledge():
+    tree = build_tree()
+    articles = (
+        ArticleNode.query.filter(
+            ArticleNode.children_count == 0,
+            ArticleNode.is_published == True
+        ).order_by(ArticleNode.created_at.desc()).limit(10).all()
+    )
+    return render_template("index.html", tree=tree, articles=articles, page_title="База знаний")
+
+
+@main_bp.route("/courses")
+def courses():
+    tree = build_tree()
+    courses_list = ArticleNode.query.filter_by(level=0, is_published=True).all()
+    return render_template("index.html", tree=tree, articles=courses_list, page_title="Курсы")
+
+
+@main_bp.route("/search")
+def search():
+    query = request.args.get("q", "").strip()
+    if not query:
+        flash("Введите поисковый запрос", "info")
+        return redirect(url_for("main.knowledge"))
+
+    tree = build_tree()
+    results = (
+        ArticleNode.query.filter(
+            ArticleNode.is_published.is_(True),
+            (ArticleNode.title.ilike(f"%{query}%") | ArticleNode.content.ilike(f"%{query}%"))
+        ).order_by(ArticleNode.title).limit(20).all()
+    )
+
+    # Упрощенный вывод для проверки работоспособности
+    return render_template("index.html", tree=tree, results=results, query=query, page_title=f"Поиск: {query}",
+                           is_search=True)
+
+
+@main_bp.route("/article/<slug>")
+def article(slug):
+    tree = build_tree()
+    node = ArticleNode.query.filter_by(slug=slug, is_published=True).first_or_404()
+
+    processed_content = prepare_markdown(node.content or "")
+    html_content = render_article_html(processed_content)
+    breadcrumbs = get_breadcrumb_path(slug)
+
+    # Получаем ID избранных статей текущего пользователя
+    favorited_article_ids = set()
+    if current_user.is_authenticated:
+        favorited_article_ids = {fav.article_id for fav in Favorite.query.filter_by(user_id=current_user.id).all()}
+
+    return render_template(
+        "index.html", tree=tree, article=node, content_html=Markup(html_content),
+        breadcrumbs=breadcrumbs, page_title=node.title, favorited_article_ids=favorited_article_ids
+    )

@@ -15,7 +15,7 @@ from app.constants import (
 )
 
 # Инициализируем модель ОДИН РАЗ при импорте модуля
-print("🤖 Загрузка модели эмбеддингов...")
+print("🤖 Загрузка модели векторизации...")
 embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 print("✅ Модель загружена")
 
@@ -175,7 +175,7 @@ def ask_ai_question(question: str) -> dict:
 ОТВЕТ:"""
 
     # 4. Запрос к Ollama
-    print("🤖 Отправка запроса в Qwen...")
+    print("🤖 Отправка запроса в AI...")
 
     try:
         response = ollama.generate(
