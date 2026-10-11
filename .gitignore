@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+env/
+venv/
+
+# База данных
+*.db
+*.sqlite
+instance/
+
+# Секреты
+.env
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Загрузки
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Резервные копии
+articles/*.md
