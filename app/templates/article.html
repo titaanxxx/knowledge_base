@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- ========== СТРАНИЦА СТАТЬИ ========== -->
+
+<!-- Заголовок и кнопки действий -->
+<div class="title-header-group">
+    <div class="title-wrapper">
+        <h1 class="page-title">
+            {{ article.title }}
+            {% if current_user.is_authenticated and current_user.is_admin %}
+                {% if article.is_dirty or unsaved_title_change %}
+                    <span class="draft-icon" title="Есть несохраненный черновик"></span>
+                {% endif %}
+            {% endif %}
+        </h1>
+    </div>
+    
+    <div class="article-actions">
+        {% if current_user.is_authenticated %}
+            <button class="btn-favorite {% if article.id in favorited_article_ids %}active{% endif %}" 
+                    data-article-id="{{ article.id }}"
+                    title="Добавить в избранное"
+                    aria-label="В избранное">
+                <i class="fa-solid fa-heart"></i>
+            </button>
+        {% endif %}
+        <a href="{{ url_for('main.export_article_pdf', slug=article.slug) }}" 
+           class="btn-export-icon btn-export-pdf"
+           title="Скачать статью в формате PDF"
+           aria-label="Экспортировать статью в PDF">
+            <i class="fa-solid fa-file-pdf"></i>
+        </a>
+        <a href="{{ url_for('main.export_article', slug=article.slug) }}" 
+           class="btn-export-icon" 
+           title="Скачать статью в формате Markdown"
+           aria-label="Экспортировать статью">
+            <i class="fa-solid fa-download"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Хлебные крошки -->
+{% if breadcrumbs %}
+<nav class="breadcrumbs">
+    <a href="{{ url_for('main.knowledge') }}">🏠 Главная</a> 
+    {% for crumb in breadcrumbs %}
+        <span style="margin: 0 5px;">→</span>
+        <a href="{{ url_for('main.article', slug=crumb.slug) }}" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+            {% if crumb.level == 0 %}
+                <i class="fa-solid fa-book" title="Курс"></i>
+            {% elif crumb.level == 1 %}
+                <i class="fa-solid fa-folder" title="Модуль"></i>
+            {% elif crumb.level == 2 %}
+                <i class="fa-solid fa-folder" title="Тема"></i>
+            {% elif crumb.level == 3 %}
+                <i class="fa-solid fa-file" title="Статья"></i>
+            {% endif %}
+            {{ crumb.title }}
+        </a>
+    {% endfor %}
+</nav>
+{% endif %}
+
+<!-- Контент статьи -->
+<div class="article-content">
+    <div class="article-text">
+        {{ content_html | safe }}
+    </div>
+</div>
+
+<!-- Кнопки администратора -->
+{% if current_user.is_authenticated and current_user.is_admin %}
+<div class="article-admin-actions">
+    <a href="{{ url_for('admin.edit_article', slug=article.slug) }}" class="auth-btn primary">Редактировать</a>
+    <form action="{{ url_for('admin.delete_article', slug=article.slug) }}" method="post" class="inline-form">
+        <button type="submit" class="auth-btn secondary" onclick="return confirm('Удалить статью?')">Удалить</button>
+    </form>
+</div>
+{% endif %}
+
+<!-- Навигация по соседним статьям -->
+{% if prev or next_article %}
+<nav class="interactive-nav-level" aria-label="Навигация по уровню">
+    <div class="nav-level-header">
+        <span>
+            📂 {{ {0: 'Курс', 1: 'Модуль', 2: 'Тема', 3: 'Статья'}.get(article.level, 'Раздел') }}
+        </span>
+    </div>
+    
+    <div class="interactive-nav-grid">
+        {% if prev %}
+            <div class="nav-item nav-item-prev">
+                <a href="{{ url_for('main.article', slug=prev.slug) }}" class="nav-link-full">
+                    <span class="nav-icon">←</span>
+                    <span class="nav-text">
+                        <strong>Назад:</strong> {{ prev.title }}
+                    </span>
+                </a>
+            </div>
+        {% else %}
+            <div class="nav-item nav-item-empty"></div>
+        {% endif %}
+
+        <div class="nav-item nav-item-current">
+            <span class="nav-text-center">
+                Сейчас здесь: <strong>{{ article.title }}</strong>
+            </span>
+        </div>
+
+        {% if next_article %}
+            <div class="nav-item nav-item-next">
+                <a href="{{ url_for('main.article', slug=next_article.slug) }}" class="nav-link-full">
+                    <span class="nav-text">
+                        <strong>Далее:</strong> {{ next_article.title }}
+                    </span>
+                    <span class="nav-icon">→</span>
+                </a>
+            </div>
+        {% else %}
+            <div class="nav-item nav-item-empty"></div>
+        {% endif %}
+    </div>
+</nav>
+{% endif %}
+
+{% endblock %}

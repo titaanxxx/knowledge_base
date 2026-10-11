@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="search-results-container">
+    <h2>🔍 Результаты поиска: "{{ query }}"</h2>
+    
+    {% if results %}
+        <div class="article-grid search-grid">
+            {% for result in results %}
+                <div class="article-card-search">
+                    <a href="{{ url_for('main.article', slug=result.article.slug) }}" class="search-title">
+                        {{ result.article.title }}
+                    </a>
+                    <div class="search-excerpt">
+                        {% for fragment in result.fragments[:3] %}
+                            <div class="search-fragment">
+                                {{ fragment.highlight | safe }}
+                                <span class="fragment-line-number">строка {{ fragment.line }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Ничего не найдено.</p>
+    {% endif %}
+</section>
+
+{% endblock %}

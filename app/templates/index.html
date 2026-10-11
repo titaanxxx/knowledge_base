@@ -2,16 +2,73 @@
 
 {% block content %}
 
-<!-- Здесь будет контент главной страницы, статей, поиска и т.д. -->
-<!-- Пока оставим заглушку, чтобы проверить, что наследование работает -->
+<!-- ========== ГЛАВНАЯ СТРАНИЦА: СТАТИСТИКА И ПОСЛЕДНИЕ СТАТЬИ ========== -->
+<section class="dashboard-stats">
+    <h2>📊 Статистика</h2>
 
-<h1>🎉 Наследование работает!</h1>
-<p>Это тестовая страница. Если ты видишь шапку, сайдбар и футер — всё настроено правильно.</p>
+    <div class="stat-grid">
+        <div class="stat-card total">
+            <i class="fa-solid fa-layer-group"></i>
+            <span class="stat-value" id="stat-total">--</span>
+            <span class="stat-label">Всего материалов</span>
+        </div>
+        <div class="stat-card course">
+            <i class="fa-solid fa-book"></i>
+            <span class="stat-value" id="stat-courses">--</span>
+            <span class="stat-label">Курсы</span>
+        </div>
+        <div class="stat-card module">
+            <i class="fa-solid fa-folder"></i>
+            <span class="stat-value" id="stat-modules">--</span>
+            <span class="stat-label">Модули</span>
+        </div>
+        <div class="stat-card topic">
+            <i class="fa-solid fa-folder"></i>
+            <span class="stat-value" id="stat-topics">--</span>
+            <span class="stat-label">Темы</span>
+        </div>
+        <div class="stat-card article">
+            <i class="fa-solid fa-file"></i>
+            <span class="stat-value" id="stat-articles">--</span>
+            <span class="stat-label">Статьи</span>
+        </div>
+    </div>
 
-{% if current_user.is_authenticated %}
-  <p>Привет, <strong>{{ current_user.username }}</strong>! Ты авторизован.</p>
-{% else %}
-  <p>Ты не авторизован. <a href="{{ url_for('auth.login') }}">Войти</a></p>
-{% endif %}
+    <div class="tables-grid">
+        <div class="table-container">
+            <h3>➕ Последние добавленные</h3>
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Тип</th>
+                        <th>Дата</th>
+                    </tr>
+                </thead>
+                <tbody id="table-added-body">
+                    <tr><td colspan="3"><em>Загрузка...</em></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-container">
+            <h3>✏️ Последние обновленные</h3>
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Тип</th>
+                        <th>Дата правки</th>
+                    </tr>
+                </thead>
+                <tbody id="table-updated-body">
+                    <tr><td colspan="3"><em>Загрузка...</em></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Контейнер для последних статей (загружается через AJAX) -->
+<div id="articles-container"></div>
 
 {% endblock %}

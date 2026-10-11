@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="favorites-page">
+    <div class="favorites-header">
+        <h2>⭐ Избранное</h2>
+        <p class="favorites-count">
+            {% set total = favorites_tree|length %}
+            {{ total }} {{ 'материал' if total == 1 else 'материала' if total < 5 else 'материалов' }} в избранном
+        </p>
+    </div>
+    
+    {% if favorites_tree %}
+        <div class="favorites-grid">
+            {% for item in favorites_tree %}
+                <article class="favorite-card favorite-card-{{ item.type }}">
+                    <header class="favorite-card-header">
+                        <div class="favorite-card-icon">
+                            {% if item.type == 'course' %}
+                                <i class="fa-solid fa-book"></i>
+                            {% elif item.type == 'module' %}
+                                <i class="fa-solid fa-folder"></i>
+                            {% else %}
+                                <i class="fa-solid fa-file"></i>
+                            {% endif %}
+                        </div>
+                        <h3>
+                            <a href="{{ url_for('main.article', slug=item.article.slug) }}">
+                                {{ item.article.title }}
+                            </a>
+                        </h3>
+                        <span class="favorite-card-level level-{{ item.article.level }}">
+                            {{ {0: 'Курс', 1: 'Модуль', 2: 'Тема', 3: 'Статья'}.get(item.article.level, 'Раздел') }}
+                        </span>
+                    </header>
+                    
+                    <footer class="favorite-card-footer">
+                        <span class="favorite-date">
+                            <i class="fa-regular fa-clock"></i>
+                            Добавлено {{ item.favorite.created_at.strftime('%d.%m.%Y') if item.favorite and item.favorite.created_at else 'давно' }}
+                        </span>
+                        <button class="btn-remove-favorite" data-article-id="{{ item.article.id }}">
+                            <i class="fa-solid fa-trash"></i>
+                            Удалить
+                        </button>
+                    </footer>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="favorites-empty">
+            <div class="empty-icon">
+                <i class="fa-regular fa-heart"></i>
+            </div>
+            <h3>В избранном пока пусто</h3>
+            <p>Нажмите на сердечко рядом с любой статьёй, чтобы добавить её в избранное</p>
+            <a href="{{ url_for('main.knowledge') }}" class="auth-btn primary">
+                <i class="fa-solid fa-arrow-left"></i>
+                Вернуться к статьям
+            </a>
+        </div>
+    {% endif %}
+</section>
+
+{% endblock %}
