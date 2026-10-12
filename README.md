@@ -88,27 +88,7 @@
 | **Фронтенд** | HTML5 + CSS3 + Vanilla JS | Интерфейс |
 | **Иконки** | Font Awesome 6 | UI-иконки |
 
----
 
-## Скриншоты
-
-<div align="center">
-
-### Главная страница с дашбордом
-![Главная страница](docs/screenshots/dashboard.png)
-
-### Просмотр статьи с блоком кода
-![Статья](docs/screenshots/article.png)
-
-### ИИ-помощник отвечает на вопрос
-![ИИ-помощник](docs/screenshots/ai-assistant.png)
-
-### Редактор EasyMDE
-![Редактор](docs/screenshots/editor.png)
-
-</div>
-
----
 
 ## Архитектура проекта
 
