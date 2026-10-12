@@ -108,8 +108,6 @@
 
 </div>
 
-> **Как добавить скриншоты:** создайте папку `docs/screenshots/` и поместите туда изображения с именами `dashboard.png`, `article.png`, `ai-assistant.png`, `editor.png`.
-
 ---
 
 ## Архитектура проекта
