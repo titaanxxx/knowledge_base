@@ -69,14 +69,6 @@
         <a href="#" class="auth-link auth-link-secondary" onclick="openAuthModal('register'); return false;">Регистрация</a>
       {% endif %}
 
-      <div class="question-icon" id="questionIcon" title="Помощь">
-        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDEyQzEwLjQ1IDEyIDEwIDEyLjQ1IDEwIDE0SDE0QzE0IDEyLjQ1IDEzLjU1IDEyIDEyIDEyWk0xMiAyMEgxNFYyMEgxMlYyMFpNMTIgM0M3LjQ2IDMgNCA1LjQ2IDQgOVM3LjQ2IDE1IDEyIDE1UzIwIDEyLjU0IDIwIDhDNS41NCAzIDMuNTQgNS40NiAzIDhTMCA1LjQ2IDAgOFMxLjQ2IDkgMyAxMFYxMUgzVjEwQzEuNDYgMTAgMiAxMC40NSAyIDExVjE0SDEwVjE3SDE0VjE0SDE3VjExQzE3LjU0IDExIDE4IDEwLjQ1IDE4IDEwVjloMkM3Ljg1IDkgNiAzLjg1IDIgMkMyLjE1IDIgMSAzLjE1IDEgNVY4QzEuNjYgNi4yOSAyLjIzIDQuNzcgMy4xIDEuODZDMy45NyAxLjA5IDQuNzcgMCA1IDBTNi4wMyAwIDcgMS44M0MxMC4yMyA1LjIzIDEyIDkgMTIgOVMxMy43NyA1LjIzIDE3LjE3IDEuODNDMTguMDMgMS4wOSAxOC45NyAwIDIwIDBTMjMuMDMgMCAyNCAxLjgzQzI0LjIzIDMuMTcgMjQuNzcgNC42OSAyNSAxVjBTMjQuNTQgMiAyNCAzWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+" alt="?" />
-        <div id="questionDropdown" class="dropdown question-dropdown">
-          <p><strong>💡 Как пользоваться:</strong></p>
-          <p>1. Выберите уровень → 2. Родитель → 3. Markdown</p>
-        </div>
-      </div>
-
       <button class="btn-ai-question-header" onclick="openAiQuestionModal()">
         <i class="fa-solid fa-robot"></i>
         Задать вопрос ИИ
@@ -217,6 +209,7 @@
 <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tree-menu.js') }}"></script>
 <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
+<script src="{{ url_for('static', filename='js/article-view.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <!-- Передаем данные дерева в JS -->

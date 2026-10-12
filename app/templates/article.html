@@ -75,7 +75,7 @@
 <div class="article-admin-actions">
     <a href="{{ url_for('admin.edit_article', slug=article.slug) }}" class="auth-btn primary">Редактировать</a>
     <form action="{{ url_for('admin.delete_article', slug=article.slug) }}" method="post" class="inline-form">
-        <button type="submit" class="auth-btn secondary" onclick="return confirm('Удалить статью?')">Удалить</button>
+        <button type="button" class="auth-btn secondary" onclick="confirmDelete(event, '{{ article.slug }}')">Удалить</button>
     </form>
 </div>
 {% endif %}

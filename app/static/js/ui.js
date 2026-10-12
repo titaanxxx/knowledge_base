@@ -58,6 +58,69 @@ document.addEventListener('DOMContentLoaded', function() {
       syncSidebarButton();
     }
 
+
+      // ========== ЛОГИКА ИЗБРАННОГО (СТРАНИЦА СТАТЬИ) ==========
+  document.querySelectorAll('.btn-favorite').forEach(btn => {
+    btn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const articleId = this.dataset.articleId;
+      if (!articleId) return;
+
+      try {
+        const response = await fetch(`/api/favorite/toggle/${articleId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.status === 401) {
+          alert('Необходимо войти в систему');
+          return;
+        }
+
+        const data = await response.json();
+        if (data.status === 'added') {
+          this.classList.add('active');
+        } else if (data.status === 'removed') {
+          this.classList.remove('active');
+        }
+      } catch (error) {
+        console.error('Ошибка избранного:', error);
+      }
+    });
+  });
+
+      // ========== УДАЛЕНИЕ ИЗ ИЗБРАННОГО (СТРАНИЦА /FAVORITES) ==========
+  document.querySelectorAll('.btn-remove-favorite').forEach(btn => {
+    btn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const articleId = this.dataset.articleId;
+      if (!articleId) return;
+
+      try {
+        const response = await fetch(`/api/favorite/toggle/${articleId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.status === 'removed') {
+          // Удаляем карточку из страницы с анимацией
+          const card = this.closest('.favorite-card');
+          if (card) {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => card.remove(), 300);
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка удаления из избранного:', error);
+      }
+    });
+  });
+
     function syncSidebarButton() {
       const collapsed = sidebar.classList.contains('collapsed');
       toggleBtn.innerHTML = collapsed ? '→' : '←';
@@ -104,6 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.style.overflow = '';
   };
 
+
   // Модалка авторизации
   const authModal = document.getElementById('authModal');
   const authBody = document.getElementById('authBody');
@@ -117,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
       authTitle.textContent = 'Регистрация';
       authSubtitle.textContent = 'Создайте аккаунт для доступа к базе знаний';
       authBody.innerHTML = `
-        <form method="post" action="/register" class="auth-form">
+        <form method="post" action="/auth/register" class="auth-form">
           <div class="form-grid">
             <div class="form-field"><label>Логин *</label><input type="text" name="username" placeholder="ivanov123" required></div>
             <div class="form-field"><label>Почта *</label><input type="email" name="email" placeholder="student@example.com" required></div>
@@ -135,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
       authTitle.textContent = 'Вход';
       authSubtitle.textContent = 'Войдите в аккаунт, чтобы продолжить';
       authBody.innerHTML = `
-        <form method="post" action="/login" class="auth-form">
+        <form method="post" action="/auth/login" class="auth-form">
           <div class="form-field full"><label>Логин или почта</label><input type="text" name="login" placeholder="Введите логин или email" required></div>
           <div class="form-field full"><label>Пароль</label><input type="password" name="password" placeholder="Введите пароль" required></div>
           <button type="submit" class="auth-btn primary auth-submit">Войти</button>
@@ -208,5 +272,46 @@ document.addEventListener('DOMContentLoaded', function() {
   window.onclick = function(event) {
     const modal = document.getElementById('ai-question-modal');
     if (event.target === modal) closeAiQuestionModal();
+  };
+
+    // ========== КРАСИВОЕ ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ ==========
+  window.confirmDelete = function(event, slug) {
+    event.preventDefault();
+
+    // Создаем каст模альное окно подтверждения
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `
+      <div class="modal-card" style="max-width: 400px; text-align: center; padding: 30px;">
+        <h3 style="margin-bottom: 15px; color: #ef4444;">⚠️ Подтверждение</h3>
+        <p style="color: #cbd5e1; margin-bottom: 25px;">Вы действительно хотите удалить эту статью?<br>Это действие нельзя отменить.</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <button id="cancel-delete" class="auth-btn secondary">Отмена</button>
+          <button id="confirm-delete-btn" class="auth-btn" style="background: #ef4444; color: white;">Удалить</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+
+    const form = event.target.closest('form');
+
+    document.getElementById('cancel-delete').onclick = () => {
+      document.body.removeChild(overlay);
+      document.body.style.overflow = '';
+    };
+
+    document.getElementById('confirm-delete-btn').onclick = () => {
+      form.submit();
+    };
+
+    // Закрытие по клику вне окна
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        document.body.removeChild(overlay);
+        document.body.style.overflow = '';
+      }
+    });
   };
 });

@@ -339,51 +339,128 @@
 .parent-tree-option:hover { background: rgba(47, 111, 237, 0.15); }
 .parent-tree-option.selected { background: rgba(47, 111, 237, 0.25); color: #4ecdc4; }
 
-/* ---------- EASYMDE EDITOR ---------- */
-.EasyMDEContainer { background: transparent; border-radius: 14px; overflow: hidden; }
-.editor-toolbar {
-  background: #0f172a;
-  border: 1px solid #24324a;
-  border-bottom: 0;
+/* ---------- EASYMDE EDITOR (Тёмная тема) ---------- */
+.EasyMDEContainer {
+    background: transparent;
+    border-radius: 14px;
+    overflow: hidden;
 }
-.editor-toolbar a { color: #dbe6ff !important; }
-.editor-toolbar a:hover, .editor-toolbar a.active {
-  background: rgba(79, 140, 255, 0.16) !important;
-}
-.CodeMirror {
-  background: #0f172a !important;
-  color: #e5e7eb !important;
-  border: 1px solid #24324a !important;
-  border-radius: 0 0 14px 14px;
-  min-height: 320px;
-}
-.editor-preview, .editor-preview-side { background: #0b1120 !important; color: #e5e7eb !important; }
 
-/* ---------- QUESTION DROPDOWN ---------- */
-.question-icon {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
+.editor-toolbar {
+    background: #0f172a !important;
+    border: 1px solid #24324a !important;
+    border-bottom: 0 !important;
+    border-radius: 14px 14px 0 0 !important;
+    padding: 8px !important;
 }
-.question-icon img { width: 24px; height: 24px; }
-.question-dropdown {
-  position: absolute;
-  top: 42px;
-  right: 0;
-  min-width: 220px;
-  background: #111827;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px;
-  padding: 14px;
-  color: #e5e7eb;
-  box-shadow: var(--shadow);
-  display: none;
-  z-index: 100;
+
+/* Иконки тулбара — делаем их светлыми */
+.editor-toolbar a,
+.editor-toolbar button {
+    color: #cbd5e1 !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
 }
-.question-dropdown.show { display: block; }
+
+.editor-toolbar a:hover,
+.editor-toolbar button:hover,
+.editor-toolbar a.active {
+    background: rgba(79, 140, 255, 0.2) !important;
+    color: #4ecdc4 !important;
+    border-color: rgba(79, 140, 255, 0.3) !important;
+}
+
+/* Разделители в тулбаре */
+.editor-toolbar i {
+    color: #cbd5e1 !important;
+}
+
+.editor-toolbar i.separator {
+    border-left: 1px solid #24324a !important;
+    border-right: 1px solid #24324a !important;
+}
+
+/* Редактор (область ввода) */
+.CodeMirror {
+    background: #0f172a !important;
+    color: #e5e7eb !important;
+    border: 1px solid #24324a !important;
+    border-radius: 0 0 14px 14px !important;
+    min-height: 320px;
+    font-family: 'Consolas', 'Monaco', monospace !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
+
+/* Курсор — делаем его ярким */
+.CodeMirror-cursor {
+    border-left: 2px solid #4ecdc4 !important;
+}
+
+/* Выделение текста */
+.CodeMirror-selected {
+    background: rgba(79, 140, 255, 0.3) !important;
+}
+
+/* Активная строка */
+.CodeMirror-activeline-background {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Номера строк (gutter) */
+.CodeMirror-gutters {
+    background: #0b1120 !important;
+    border-right: 1px solid #24324a !important;
+}
+
+.CodeMirror-linenumber {
+    color: #64748b !important;
+    font-size: 12px !important;
+}
+
+/* Превью Markdown */
+.editor-preview,
+.editor-preview-side {
+    background: #0b1120 !important;
+    color: #e5e7eb !important;
+    padding: 20px !important;
+    line-height: 1.7 !important;
+}
+
+.editor-preview pre,
+.editor-preview-side pre {
+    background: #1e293b !important;
+    padding: 16px !important;
+    border-radius: 8px !important;
+    border: 1px solid #24324a !important;
+}
+
+.editor-preview code,
+.editor-preview-side code {
+    background: #1e293b !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    color: #4ecdc4 !important;
+}
+
+/* Status bar (информация о строках, словах) */
+.editor-statusbar {
+    background: #0b1120 !important;
+    color: #94a3b8 !important;
+    border: 1px solid #24324a !important;
+    border-top: 0 !important;
+    border-radius: 0 0 14px 14px !important;
+    padding: 8px 16px !important;
+    font-size: 12px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+}
+
+.editor-statusbar span {
+    color: #cbd5e1 !important;
+    margin: 0 8px !important;
+}
 
 /* ---------- AI MODAL ---------- */
 #ai-question-text {
@@ -463,4 +540,79 @@
 }
 @media (max-width: 720px) {
   .article-admin-actions, .form-buttons { flex-direction: column; align-items: stretch; }
+}
+
+
+/* ---------- AI MODAL ---------- */
+/* Исправление крестика */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid #4a5568;
+  background: #2d3748;
+  border-radius: 20px 20px 0 0;
+  position: relative; /* Важно для абсолютного позиционирования крестика */
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;       /* Возвращаем на место */
+  right: 16px;     /* Возвращаем на место */
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-close:hover { background: rgba(255,255,255,0.2); }
+
+/* Исправление отступа кнопки */
+.question-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Добавляем нормальный отступ между текстом и кнопкой */
+  margin-bottom: 24px;
+}
+
+.btn-submit-question {
+  align-self: flex-end; /* Прижимаем вправо, если нужно, или stretch на всю ширину */
+  width: 100%;
+  justify-content: center;
+}
+
+/* ========== ФИКСАЦИЯ МОДАЛКИ ИИ ========== */
+#ai-question-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: none !important; /* Переопределяется JS на 'flex' */
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 99999 !important;
+    background: rgba(6, 10, 20, 0.85) !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+/* Когда модалка активна (через JS) */
+#ai-question-modal[style*="display: flex"] {
+    display: flex !important;
+}
+
+#ai-question-modal .modal-content {
+    width: 90% !important;
+    max-width: 700px !important;
+    max-height: 85vh !important;
+    margin: 0 auto !important;
+    position: relative !important;
 }

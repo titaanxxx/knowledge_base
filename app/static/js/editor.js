@@ -79,11 +79,13 @@ document.addEventListener('DOMContentLoaded', function() {
     element: textarea,
     spellChecker: false,
     autofocus: true,
+    lineNumbers: true, // <--- ДОБАВИТЬ: Показывать номера строк
     autosave: {
       enabled: true,
-      uniqueId: 'kb-editor-' + window.location.pathname
+      uniqueId: 'kb-editor-' + window.location.pathname,
+      delay: 30000
     },
-    status: ['autosave', 'lines', 'words', 'cursor'],
+    status: ['autosave', 'lines', 'words', 'cursor'], // <--- ПОКАЗАТЬ: строки, слова, курсор
     toolbar: [
       {
         name: "custom_undo",
@@ -163,4 +165,6 @@ document.addEventListener('DOMContentLoaded', function() {
       sendDraft();
     });
   }
+
+
 });

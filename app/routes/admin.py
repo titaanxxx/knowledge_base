@@ -6,7 +6,7 @@ from app.models import ArticleNode
 from app.extensions import db
 from app.utils.decorators import admin_required
 from app.services.tree_service import build_tree, get_parents_for_form, get_breadcrumb_path
-from app.utils.markdown_utils import normalize_markdown, render_article_html  # <-- ИСПРАВЛЕНО
+from app.utils.markdown_utils import normalize_markdown, render_article_html
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -19,6 +19,7 @@ def add_article():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         raw_content = request.form.get("content", "")
+        submit_type = request.form.get("submit_type", "publish")
 
         try:
             level = int(request.form.get("level", "3"))
@@ -26,20 +27,22 @@ def add_article():
             parent_id = int(parent_id_str) if parent_id_str else None
         except ValueError:
             flash("Неверный формат уровня!", "error")
-            return render_template("index.html", parents=parents, page_title="➕ Добавить статью", show_form=True)
+            return render_template("admin/article_form.html", tree=build_tree(), parents=parents,
+                                   page_title="➕ Добавить статью")
 
         if not title or not raw_content:
             flash("Заполните заголовок и содержимое!", "error")
-            return render_template("index.html", parents=parents, page_title="➕ Добавить статью", show_form=True)
+            return render_template("admin/article_form.html", tree=build_tree(), parents=parents,
+                                   page_title="➕ Добавить статью")
 
         slug = re.sub(r'[^a-z0-9а-яё\s\-]', '', title.lower())
         slug = re.sub(r'\s+', '-', slug).strip('-')[:50]
 
         if ArticleNode.query.filter_by(slug=slug).first():
             flash(f"Статья '{title}' уже существует!", "error")
-            return render_template("index.html", parents=parents, page_title="➕ Добавить статью", show_form=True)
+            return render_template("admin/article_form.html", tree=build_tree(), parents=parents,
+                                   page_title="➕ Добавить статью")
 
-        # Сохраняем резервную копию
         filename = f"articles/{slug}.md"
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, 'w', encoding='utf-8') as f:
@@ -49,47 +52,58 @@ def add_article():
             title=title, slug=slug, filename=filename, level=level,
             parent_id=parent_id, content=raw_content, is_published=True
         )
+
+        if submit_type == 'draft':
+            node.content_draft = raw_content
+            node.is_dirty = True
+            node.is_published = False
+
         db.session.add(node)
         db.session.commit()
+
+        # Обновляем children_count у родителя
+        if parent_id:
+            parent = db.session.get(ArticleNode, parent_id)
+            if parent:
+                parent.children_count = ArticleNode.query.filter_by(parent_id=parent_id, is_published=True).count()
+                db.session.commit()
 
         flash(f"✅ Статья '{title}' добавлена!", "success")
         return redirect(url_for("main.article", slug=slug))
 
-    return render_template("index.html", tree=build_tree(), mode="add", show_form=True, parents=parents)
+    return render_template("admin/article_form.html", tree=build_tree(), parents=parents,
+                           page_title="➕ Добавить статья")
 
 
 @admin_bp.route("/edit_article/<slug>", methods=["GET", "POST"])
 @admin_required
 def edit_article(slug):
-    parents = get_parents_for_form()
     node = ArticleNode.query.filter_by(slug=slug).first_or_404()
+    parents = get_parents_for_form()
 
     if request.method == "GET":
-        # Берем черновик, если он есть, иначе нормализуем основной контент
         edit_content = node.content_draft if (node.is_dirty and node.content_draft) else normalize_markdown(
             node.content)
 
-        # ИСПРАВЛЕНО: используем render_article_html вместо удаленной get_article_markdown
-        preview_html = render_article_html(node.content) if node.content else ""
-
         return render_template(
-            "index.html",
+            "admin/article_form.html",
             tree=build_tree(),
             article=node,
-            content_html=preview_html,  # <-- ИСПРАВЛЕНО
-            breadcrumbs=get_breadcrumb_path(slug),
-            page_title=f"✏️ Редактирование: {node.title}",
-            edit_mode=True, show_form=True, edit_content=edit_content, parents=parents, is_admin=True
+            edit_mode=True,
+            edit_content=edit_content,
+            parents=parents,
+            page_title=f"✏️ Редактирование: {node.title}"
         )
 
-    # POST логика (сохранение черновика или публикации)
+    # POST
     submit_type = request.form.get("submit_type")
     title = request.form.get("title", "").strip()
     new_content = request.form.get("content", "")
 
     try:
         level = int(request.form.get("level", str(node.level)))
-        parent_id = int(request.form.get("parent_id")) if request.form.get("parent_id") else None
+        parent_id_str = request.form.get("parent_id", "")
+        parent_id = int(parent_id_str) if parent_id_str else None
     except ValueError:
         flash("Неверный формат уровня или родителя!", "error")
         return redirect(url_for('admin.edit_article', slug=slug))
@@ -123,18 +137,19 @@ def edit_article(slug):
             node.content = new_content
             node.content_draft = None
             node.is_dirty = False
-            flash("✅ Статья успешно опубликована и обновлена!", "success")
+            node.is_published = True
+            flash("✅ Статья успешно опубликована!", "success")
         elif submit_type == 'draft':
             node.content_draft = new_content
             node.is_dirty = True
-            flash("💾 Черновик сохранен. Изменения НЕ видны пользователям.", "info")
+            flash("💾 Черновик сохранен.", "info")
 
         db.session.commit()
         return redirect(url_for("main.article", slug=new_slug))
 
     except Exception as e:
         db.session.rollback()
-        flash(f"❌ Ошибка работы с файлом или БД: {str(e)}", "error")
+        flash(f"❌ Ошибка: {str(e)}", "error")
         return redirect(url_for('admin.edit_article', slug=slug))
 
 
@@ -143,6 +158,12 @@ def edit_article(slug):
 def delete_article(slug):
     node = ArticleNode.query.filter_by(slug=slug).first_or_404()
     try:
+        # Обновляем children_count у родителя
+        if node.parent_id:
+            parent = db.session.get(ArticleNode, node.parent_id)
+            if parent:
+                parent.children_count = max(0, parent.children_count - 1)
+
         if node.filename and os.path.exists(node.filename):
             os.remove(node.filename)
         db.session.delete(node)

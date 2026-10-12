@@ -332,3 +332,43 @@
   .article-numbered-block { padding-left: 34px !important; }
   .article-block-number { width: 24px; font-size: 11px; }
 }
+
+/* ========== НУМЕРАЦИЯ СТРОК В СТАТЬЯХ (ДЛЯ ЧТЕНИЯ) ========== */
+.numbered-code-block {
+  width: 100%;
+  margin: 1.5em 0;
+  background: #0b1120;
+  border: 1px solid #24324a;
+  border-radius: 12px;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.numbered-code-line {
+  display: grid;
+  grid-template-columns: 45px 1fr; /* Фиксированная ширина для номеров */
+  column-gap: 12px;
+  width: max-content;
+  min-width: 100%;
+  padding: 0 16px;
+}
+
+.numbered-code-line:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.code-line-number {
+  color: rgba(255, 255, 255, 0.3);
+  text-align: right;
+  user-select: none;
+  border-right: 1px solid #24324a;
+  padding-right: 12px;
+}
+
+.code-line-text {
+  color: #e5e7eb;
+  white-space: pre; /* Сохраняет все пробелы и отступы кода */
+}
+

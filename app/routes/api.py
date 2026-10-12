@@ -1,25 +1,21 @@
 from flask import Blueprint, jsonify, request, current_app
 from flask_login import login_required, current_user
-import re
+import os
 
 from app.models import ArticleNode, Favorite
 from app.extensions import db
 from app.services.ai_service import ask_ai_question
-from app.services.tree_service import build_tree
 
 api_bp = Blueprint('api', __name__)
 
 
-@api_bp.route("/api/ask", methods=['POST'])
+@api_bp.route("/ask", methods=['POST'])
 @login_required
 def ask_question():
-    """Обработка вопроса пользователя к ИИ-помощнику"""
     data = request.json
     question = data.get('question', '').strip()
-
     if not question:
         return jsonify({'error': 'Вопрос не может быть пустым'}), 400
-
     try:
         result = ask_ai_question(question)
         return jsonify(result)
@@ -27,7 +23,7 @@ def ask_question():
         return jsonify({'error': f'Не удалось получить ответ от ИИ: {str(e)}'}), 500
 
 
-@api_bp.route("/api/favorite/toggle/<int:article_id>", methods=['POST'])
+@api_bp.route("/favorite/toggle/<int:article_id>", methods=['POST'])
 @login_required
 def toggle_favorite(article_id):
     article = ArticleNode.query.filter_by(id=article_id, is_published=True).first_or_404()
@@ -44,10 +40,16 @@ def toggle_favorite(article_id):
         return jsonify({'status': 'added', 'favorited': True})
 
 
-@api_bp.route("/api/dashboard/stats")
+@api_bp.route("/favorite/check/<int:article_id>")
+@login_required
+def check_favorite(article_id):
+    favorite = Favorite.query.filter_by(user_id=current_user.id, article_id=article_id).first()
+    return jsonify({'favorited': favorite is not None})
+
+
+@api_bp.route("/dashboard/stats")
 def api_dashboard_stats():
     base_filter = ArticleNode.query.filter_by(is_published=True)
-
     level_counts = {
         'courses': base_filter.filter_by(level=0).count(),
         'modules': base_filter.filter_by(level=1).count(),
@@ -69,3 +71,30 @@ def api_dashboard_stats():
         'latest_added': [serialize(a) for a in base_filter.order_by(ArticleNode.created_at.desc()).limit(5).all()],
         'latest_updated': [serialize(u) for u in base_filter.order_by(ArticleNode.updated_at.desc()).limit(5).all()]
     })
+
+
+@api_bp.route("/articles/latest")
+def api_articles_latest():
+    articles = ArticleNode.query.filter_by(is_published=True).order_by(ArticleNode.created_at.desc()).limit(5).all()
+    result = [{
+        'id': a.id, 'title': a.title, 'slug': a.slug,
+        'level_name': {0: 'Курс', 1: 'Модуль', 2: 'Тема', 3: 'Статья'}.get(a.level, 'Раздел'),
+        'created_at': a.created_at.strftime('%d.%m.%Y %H:%M') if a.created_at else ''
+    } for a in articles]
+    return jsonify(result)
+
+
+@api_bp.route("/draft/save", methods=['POST'])
+@login_required
+def save_draft():
+    slug = request.form.get('slug')
+    content = request.form.get('content', '')
+    if not slug: return jsonify({'error': 'Slug не указан'}), 400
+
+    article = ArticleNode.query.filter_by(slug=slug).first()
+    if not article: return jsonify({'error': 'Статья не найдена'}), 404
+
+    article.content_draft = content
+    article.is_dirty = True
+    db.session.commit()
+    return jsonify({'status': 'saved'})

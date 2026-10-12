@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="add-form-container">
+    <h2>
+        {% if edit_mode %}
+            ✏️ Редактирование: {{ article.title }}
+        {% else %}
+            ➕ Добавить новую статью
+        {% endif %}
+    </h2>
+
+    <form method="post" 
+          action="{% if edit_mode %}{{ url_for('admin.edit_article', slug=article.slug) }}{% else %}{{ url_for('admin.add_article') }}{% endif %}" 
+          class="add-form-enhanced">
+        
+        <div class="form-grid">
+            <!-- Заголовок -->
+            <div class="form-field full">
+                <label for="title">Заголовок статьи *</label>
+                <input type="text" id="title" name="title" 
+                       value="{{ article.title if edit_mode else '' }}" 
+                       placeholder="Например: Введение в алгоритмы" 
+                       required>
+            </div>
+
+            <!-- Уровень -->
+            <div class="form-field">
+                <label for="level">Уровень *</label>
+                <select id="level" name="level" required>
+                    <option value="0" {% if edit_mode and article.level == 0 %}selected{% endif %}>📖 Курс (уровень 0)</option>
+                    <option value="1" {% if edit_mode and article.level == 1 %}selected{% endif %}>📁 Модуль (уровень 1)</option>
+                    <option value="2" {% if edit_mode and article.level == 2 %}selected{% endif %}>📂 Тема (уровень 2)</option>
+                    <option value="3" {% if not edit_mode or article.level == 3 %}selected{% endif %}>📄 Статья (уровень 3)</option>
+                </select>
+            </div>
+
+            <!-- Родитель -->
+            <div class="form-field">
+                <label>Родительский элемент</label>
+                <div class="parent-tree-wrapper">
+                    <input type="hidden" id="parent_id" name="parent_id" 
+                           value="{{ article.parent_id if edit_mode and article.parent_id else '' }}">
+                    <div class="parent-tree-select-box" id="parent-select-box">
+                        <span id="parent-select-text">
+                            {% if edit_mode and article.parent_id %}
+                                {{ parents|selectattr('id', 'equalto', article.parent_id)|map(attribute='title')|first or 'Не выбран' }}
+                            {% else %}
+                                Корневой уровень (нет родителя)
+                            {% endif %}
+                        </span>
+                        <span class="chevron"></span>
+                    </div>
+                    <div class="parent-tree-dropdown" id="parent-dropdown">
+                        <div class="parent-tree-option" data-id="" data-title="Корневой уровень (нет родителя)">
+                            <i class="fa-solid fa-home"></i>&nbsp; Корневой уровень (нет родителя)
+                        </div>
+                        {% for p in parents %}
+                            <div class="parent-tree-option {% if edit_mode and article.parent_id == p.id %}selected{% endif %}" 
+                                 data-id="{{ p.id }}" 
+                                 data-title="{{ p.title }}">
+                                {{ p.prefix_html|safe }} {{ p.icon|safe }}&nbsp; {{ p.title }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Контент -->
+            <div class="form-field full">
+                <label for="content-editor">Содержимое (Markdown) *</label>
+                <textarea id="content-editor" name="content" 
+                          placeholder="Пиши в Markdown...">{{ edit_content if edit_mode else '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- Кнопки -->
+        <div class="form-buttons">
+            <button type="submit" name="submit_type" value="draft" class="auth-btn secondary">
+                💾 Сохранить как черновик
+            </button>
+            <button type="submit" name="submit_type" value="publish" class="auth-btn primary">
+                🚀 Опубликовать
+            </button>
+            <a href="{{ url_for('main.knowledge') }}" class="auth-btn tertiary">Отмена</a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Логика кастомного dropdown для выбора родителя
+document.addEventListener('DOMContentLoaded', function() {
+    const selectBox = document.getElementById('parent-select-box');
+    const dropdown = document.getElementById('parent-dropdown');
+    const textSpan = document.getElementById('parent-select-text');
+    const hiddenInput = document.getElementById('parent_id');
+
+    if (selectBox && dropdown) {
+        selectBox.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+        });
+
+        dropdown.querySelectorAll('.parent-tree-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                const id = opt.dataset.id;
+                const title = opt.dataset.title;
+                hiddenInput.value = id;
+                textSpan.textContent = title;
+                dropdown.querySelectorAll('.parent-tree-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                dropdown.classList.remove('show');
+            });
+        });
+
+        document.addEventListener('click', () => dropdown.classList.remove('show'));
+    }
+});
+</script>
+
+{% endblock %}
