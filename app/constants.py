@@ -38,10 +38,23 @@ AI_TEMPERATURE = 0.6
 AI_TOP_P = 0.9
 AI_TOP_K = 40
 AI_MAX_TOKENS = 1000
-AI_CONTEXT_SIZE = 12000
+AI_CONTEXT_SIZE = 8096
 AI_REPEAT_PENALTY = 1.2
 
 # Кэш векторов (в минутах)
 VECTOR_CACHE_TTL_MINUTES = 5
 MAX_CONTEXT_CHARS = 2000
 TOP_K_RELEVANT_ARTICLES = 3
+
+# НАСТРОЙКИ ГЕНЕРАЦИИ ТЕСТОВ
+TEST_MODEL_NAME = 'qwen:7b'
+TEST_TEMPERATURE = 0.7
+TEST_TOP_P = 0.9
+TEST_MAX_TOKENS = 4096      # Тесты длиннее, нужно больше токенов
+TEST_CONTEXT_SIZE = 12000
+
+# Логика генерации
+TEST_RETRY_ATTEMPTS = 2             # Количество попыток при невалидном JSON
+TEST_MIN_CONTENT_LENGTH = 50        # Минимальная длина статьи для теста
+TEST_DEFAULT_QUESTIONS = 5          # Вопросы по умолчанию
+TEST_DIFFICULTIES = ['easy', 'medium', 'hard'] # Допустимые уровни
