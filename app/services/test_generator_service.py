@@ -9,7 +9,7 @@ import ollama
 from app.models import ArticleNode
 # ВАЖНО: Проверь путь! Если constants.py лежит в app/, то: from app.constants import ...
 # Если в app/utils/, то: from app.utils.constants import ...
-from app.utils.constants import (
+from app.constants import (
     TEST_MODEL_NAME, TEST_TEMPERATURE, TEST_TOP_P,
     TEST_MAX_TOKENS, TEST_CONTEXT_SIZE, TEST_RETRY_ATTEMPTS,
     TEST_MIN_CONTENT_LENGTH, TEST_DEFAULT_QUESTIONS, TEST_DIFFICULTIES
