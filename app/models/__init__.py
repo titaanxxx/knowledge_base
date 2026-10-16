@@ -5,5 +5,6 @@
 from .user import User
 from .article import ArticleNode
 from .favorite import Favorite
+from app.models.test import TestSession, TestQuestion
 
 __all__ = ['User', 'ArticleNode', 'Favorite']
