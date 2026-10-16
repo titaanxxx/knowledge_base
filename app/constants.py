@@ -48,13 +48,23 @@ TOP_K_RELEVANT_ARTICLES = 3
 
 # НАСТРОЙКИ ГЕНЕРАЦИИ ТЕСТОВ
 TEST_MODEL_NAME = 'qwen:7b'
-TEST_TEMPERATURE = 0.7
-TEST_TOP_P = 0.9
-TEST_MAX_TOKENS = 4096      # Тесты длиннее, нужно больше токенов
-TEST_CONTEXT_SIZE = 12000
+TEST_TEMPERATURE = 0.5
+TEST_TOP_P = 0.85
 
-# Логика генерации
-TEST_RETRY_ATTEMPTS = 2             # Количество попыток при невалидном JSON
-TEST_MIN_CONTENT_LENGTH = 50        # Минимальная длина статьи для теста
-TEST_DEFAULT_QUESTIONS = 5          # Вопросы по умолчанию
-TEST_DIFFICULTIES = ['easy', 'medium', 'hard'] # Допустимые уровни
+# БЮДЖЕТ КОНТЕКСТА
+TEST_CONTEXT_SIZE = 8192
+TEST_MAX_TOKENS = 6000
+TEST_MAX_ARTICLE_CHARS = 4000
+
+# Надёжность
+TEST_RETRY_ATTEMPTS = 2
+TEST_TIMEOUT_SECONDS = 180
+TEST_KEEP_ALIVE = '5m'
+
+TEST_MIN_CONTENT_LENGTH = 50
+TEST_DEFAULT_QUESTIONS = 5
+TEST_DIFFICULTIES = ['easy', 'medium', 'hard']
+
+TEST_BATCH_SIZE = 5                 # Максимум вопросов за один запрос к LLM
+TEST_MAX_QUESTIONS = 20             # Абсолютный максимум для пользователя
+TEST_REQUIRE_EXPLANATION = True

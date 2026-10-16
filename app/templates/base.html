@@ -205,11 +205,54 @@
   </div>
 </div>
 
+<!-- Модалка настроек теста -->
+<div id="test-settings-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-clipboard-question"></i> Сгенерировать тест</h3>
+      <button class="modal-close" onclick="closeTestSettingsModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color: #94a3b8; margin-bottom: 20px;">
+        Тема: <strong id="test-topic-name" style="color: #e5e7eb;"></strong>
+      </p>
+
+      <div class="form-field" style="margin-bottom: 16px;">
+        <label>Количество вопросов</label>
+        <select id="test-num-questions" class="test-select">
+          <option value="5">5 вопросов</option>
+          <option value="10">10 вопросов</option>
+          <option value="15">15 вопросов</option>
+          <option value="20">20 вопросов</option>
+        </select>
+      </div>
+
+      <div class="form-field" style="margin-bottom: 24px;">
+        <label>Уровень сложности</label>
+        <select id="test-difficulty" class="test-select">
+          <option value="easy">Лёгкий (факты и определения)</option>
+          <option value="medium" selected>Средний (понимание концепций)</option>
+          <option value="hard">Сложный (применение на практике)</option>
+        </select>
+      </div>
+
+      <button class="auth-btn primary" style="width: 100%;" onclick="startTestGeneration()">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Сгенерировать тест
+      </button>
+
+      <p style="color: #64748b; font-size: 13px; margin-top: 16px; text-align: center;">
+        ⏱ Генерация займёт 30-60 секунд
+      </p>
+    </div>
+  </div>
+</div>
+
 <!-- ========== ПОДКЛЮЧЕНИЕ СКРИПТОВ ========== -->
 <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tree-menu.js') }}"></script>
 <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
 <script src="{{ url_for('static', filename='js/article-view.js') }}"></script>
+<script src="{{ url_for('static', filename='js/test-quiz.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <!-- Передаем данные дерева в JS -->
