@@ -30,7 +30,7 @@ from app.constants import (
 )
 
 
-# Клиент Ollama с таймаутом
+# Клиент Ollama
 llm_client = ollama.Client(
     host='http://localhost:11434',
     timeout=TEST_TIMEOUT_SECONDS
